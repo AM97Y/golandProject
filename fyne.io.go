@@ -1,16 +1,29 @@
 package main
 
-import "net/http"
 import (
-        "fyne.io/fyne/app"
-    	"fyne.io/fyne/widget"
-    	"fmt"
-    	"log"
-    	"encoding/json"
-
-        // Shortening the import reference name seems to make it a bit easier
-        owm "github.com/briandowns/openweathermap"
+	"encoding/json"
+	"fmt"
+	"fyne.io/fyne/app"
+	"fyne.io/fyne/widget"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
 )
+
+
+const (
+	dumpRaw = false
+	zip     = "150000,ru"
+	api     =  "99a2c3bc9d5f4bfde5eb78c75845393d"
+)
+
+var (
+	weatherKeys = map[string]bool{"main": false, "wind": false, "coord": false, "weather": true, "sys": false, "clouds": false}
+)
+
 
 type WeatherInfo struct {
   List []WeatherListItem `json:list`
@@ -35,14 +48,8 @@ type WeatherType struct {
 }
 // "99a2c3bc9d5f4bfde5eb78c75845393d"
 func main() {
+	// Создаем графическую часть
     a := app.New()
-    w, err := owm.NewCurrent("F", "ru", "99a2c3bc9d5f4bfde5eb78c75845393d") // fahrenheit (imperial) with Russian output
-    if err != nil {
-        log.Fatalln(err)
-    }
-
-    w.CurrentByName("Yaroslavl")
-    fmt.Println(w)
     win := a.NewWindow("Hello World")
     win.SetContent(widget.NewVBox(
         widget.NewLabel("Hello World!"),
@@ -50,7 +57,86 @@ func main() {
             a.Quit()
         }),
     ))
-    win.ShowAndRun()
+    //win.ShowAndRun()
+    // Читаем данные.
+	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
+	u, err := url.Parse(urlString)
+	res, err := http.Get(u.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jsonBlob, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+
+	var data map[string]interface{}
+
+	if dumpRaw {
+		fmt.Printf("blob = %s\n\n", jsonBlob)
+	}
+
+	err = json.Unmarshal(jsonBlob, &data)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	if dumpRaw {
+		fmt.Printf("%+v", data)
+	}
+	for k, v := range data {
+		val, isAnArray := isKey(k)
+		if val {
+			dumpMap(k, v, isAnArray)
+		} else {
+		}
+	}
+	win.ShowAndRun()}
+
+func dumpMap(k string, v interface{}, isArray bool) {
+
+	fmt.Printf("%s:\n", k)
+	if isArray {
+		for i := 0; i < len(v.([]interface{})); i++ {
+			nmap := v.([]interface{})[i].(map[string]interface{})
+			for kk, vv := range nmap {
+				fmt.Printf("\tthe %s is %v\n", kk, vv)
+			}
+		}
+	} else {
+		nmap := v.(map[string]interface{})
+		for kk, vv := range nmap {
+			if isTempVal(kk) {
+				farenTemp := faren(vv.(float64))
+				fmt.Printf("\tthe %s is %f\n", kk, farenTemp)
+			} else if isSunVal(kk) {
+				sunTime := time.Unix((int64(vv.(float64))), 0)
+				fmt.Printf("\tthe %s at %v\n", kk, sunTime)
+			} else {
+				fmt.Printf("\tthe %s is %v\n", kk, vv)
+			}
+		}
+	}
+}
+
+func isKey(k string) (ok bool, isArray bool) {
+	isArray, ok = weatherKeys[k]
+	return ok, isArray
+}
+
+func faren(kelvin float64) float64 {
+	return 9.0/5.0*(kelvin-273.0) + 32.0
+}
+
+func isTempVal(k string) bool {
+	return strings.Contains(k, "temp")
+}
+
+func isSunVal(k string) bool {
+	return strings.Contains(k, "sun")
 }
 
 func getWeatherForecast(result interface{}) error {
