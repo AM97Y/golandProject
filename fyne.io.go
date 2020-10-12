@@ -71,8 +71,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-
+	
 	var data map[string]interface{}
 
 	if dumpRaw {
@@ -87,46 +86,54 @@ func main() {
 	if dumpRaw {
 		fmt.Printf("%+v", data)
 	}
+
+
+	var vBox = widget.NewVBox()
+
 	for k, v := range data {
-		val, isAnArray := isKey(k)
+		val, isArray := isKey(k)
 		if val {
-			dumpMap(k, v, isAnArray)
+			fmt.Printf("%s:\n", k)
+			if isArray {
+				for i := 0; i < len(v.([]interface{})); i++ {
+					nmap := v.([]interface{})[i].(map[string]interface{})
+					for kk, vv := range nmap {
+						fmt.Printf("\tthe %s is %v\n", kk, vv)
+					}
+				}
+			} else {
+				nmap := v.(map[string]interface{})
+				for kk, vv := range nmap {
+					if isTempVal(kk) {
+						farenTemp := faren(vv.(float64))
+
+						vBox.Append(widget.NewVBox(
+							widget.NewLabel(fmt.Sprintf("\tthe %s is %f\n", kk, farenTemp))))
+
+						fmt.Printf("\tthe %s is %f\n", kk, farenTemp)
+					} else if isSunVal(kk) {
+						sunTime := time.Unix(int64(vv.(float64)), 0)
+						vBox.Append(widget.NewVBox(
+							widget.NewLabel(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))))
+						fmt.Printf("\tthe %s at %v\n", kk, sunTime)
+					} else {
+						vBox.Append(widget.NewVBox(
+							widget.NewLabel(fmt.Sprintf("\tthe %s is %v\n", kk, vv))))
+						fmt.Printf("\tthe %s is %v\n", kk, vv)
+					}
+				}
+			}
 		} else {
 		}
 	}
+	win.SetContent(vBox)
 	win.ShowAndRun()}
-
-func dumpMap(k string, v interface{}, isArray bool) {
-
-	fmt.Printf("%s:\n", k)
-	if isArray {
-		for i := 0; i < len(v.([]interface{})); i++ {
-			nmap := v.([]interface{})[i].(map[string]interface{})
-			for kk, vv := range nmap {
-				fmt.Printf("\tthe %s is %v\n", kk, vv)
-			}
-		}
-	} else {
-		nmap := v.(map[string]interface{})
-		for kk, vv := range nmap {
-			if isTempVal(kk) {
-				farenTemp := faren(vv.(float64))
-				fmt.Printf("\tthe %s is %f\n", kk, farenTemp)
-			} else if isSunVal(kk) {
-				sunTime := time.Unix((int64(vv.(float64))), 0)
-				fmt.Printf("\tthe %s at %v\n", kk, sunTime)
-			} else {
-				fmt.Printf("\tthe %s is %v\n", kk, vv)
-			}
-		}
-	}
-}
 
 func isKey(k string) (ok bool, isArray bool) {
 	isArray, ok = weatherKeys[k]
 	return ok, isArray
 }
-
+// Надо С
 func faren(kelvin float64) float64 {
 	return 9.0/5.0*(kelvin-273.0) + 32.0
 }
@@ -137,14 +144,4 @@ func isTempVal(k string) bool {
 
 func isSunVal(k string) bool {
 	return strings.Contains(k, "sun")
-}
-
-func getWeatherForecast(result interface{}) error {
-	var url = fmt.Sprintf("https://api.openweathermap.org/data/2.5/forecast?q=Voronezh&cnt=4&units=metric&appid=%s") // инициализируйте со своим ключом
-	response, err := http.Get(url)
-	if err != nil {
-	fmt.Print(err)
-	}
-	defer response.Body.Close()
-	return json.NewDecoder(response.Body).Decode(result)
 }
