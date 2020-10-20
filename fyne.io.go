@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/widget"
 	"io/ioutil"
@@ -47,17 +48,25 @@ type WeatherType struct {
   Icon string `json:icon`
 }
 // "99a2c3bc9d5f4bfde5eb78c75845393d"
+func getWeatherForecast(result interface{}) error {
+	var url = fmt.Sprintf("https://api.openweathermap.org/data/2.5/forecast?q=Voronezh&cnt=4&units=metric&appid=%s", api) // инициализируйте со своим ключом
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Print(err)
+	}
+	defer response.Body.Close()
+	return json.NewDecoder(response.Body).Decode(result)
+}
 func main() {
 	// Создаем графическую часть
     a := app.New()
-    win := a.NewWindow("Hello World")
+    win := a.NewWindow("Программа для просмотра погоды")
     win.SetContent(widget.NewVBox(
-        widget.NewLabel("Hello World!"),
         widget.NewButton("Quit", func() {
             a.Quit()
         }),
     ))
-    //win.ShowAndRun()
+
     // Читаем данные.
 	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
 	u, err := url.Parse(urlString)
@@ -94,10 +103,21 @@ func main() {
 		val, isArray := isKey(k)
 		if val {
 			fmt.Printf("%s:\n", k)
+			vBox.Append(widget.NewVBox(
+				widget.NewLabel(fmt.Sprintf("\t%s\n", k))))
+
 			if isArray {
 				for i := 0; i < len(v.([]interface{})); i++ {
 					nmap := v.([]interface{})[i].(map[string]interface{})
 					for kk, vv := range nmap {
+						if strings.Contains(kk, "icon") {
+							var resource, _ = fyne.LoadResourceFromURLString(fmt.Sprintf("http://openweathermap.org/img/wn/%s.png", vv)) // создаем статический ресурс, содержащий иконку погоды
+							var icon = widget.NewIcon(resource)
+							vBox.Append(icon)
+						}
+						vBox.Append(widget.NewVBox(
+							widget.NewLabel(fmt.Sprintf("\tthe %s is %v\n", kk, vv))))
+
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
 					}
 				}
@@ -107,18 +127,18 @@ func main() {
 					if isTempVal(kk) {
 						farenTemp := faren(vv.(float64))
 
-						vBox.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("\tthe %s is %f\n", kk, farenTemp))))
+						//vBox.Append(widget.NewVBox(
+						//	widget.NewLabel(fmt.Sprintf("\tthe %s is %f\n", kk, farenTemp))))
 
 						fmt.Printf("\tthe %s is %f\n", kk, farenTemp)
 					} else if isSunVal(kk) {
 						sunTime := time.Unix(int64(vv.(float64)), 0)
-						vBox.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))))
+						//vBox.Append(widget.NewVBox(
+							//widget.NewLabel(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))))
 						fmt.Printf("\tthe %s at %v\n", kk, sunTime)
 					} else {
-						vBox.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("\tthe %s is %v\n", kk, vv))))
+						//vBox.Append(widget.NewVBox(
+							//widget.NewLabel(fmt.Sprintf("\tthe %s is %v\n", kk, vv))))
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
 					}
 				}
@@ -126,6 +146,9 @@ func main() {
 		} else {
 		}
 	}
+	vBox.Append(widget.NewButton("Закрыть", func() {
+		a.Quit()
+	}))
 	win.SetContent(vBox)
 	win.ShowAndRun()}
 
@@ -135,7 +158,8 @@ func isKey(k string) (ok bool, isArray bool) {
 }
 // Надо С
 func faren(kelvin float64) float64 {
-	return 9.0/5.0*(kelvin-273.0) + 32.0
+	fmt.Printf("\tthe____________ %s is %v\n", kelvin-273.0, kelvin)
+	return kelvin-273.0
 }
 
 func isTempVal(k string) bool {
