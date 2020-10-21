@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
+	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
 	"io/ioutil"
 	"log"
@@ -12,7 +13,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"math"
 )
 
 
@@ -61,7 +61,8 @@ func getWeatherForecast(result interface{}) error {
 func main() {
 	// Создаем графическую часть
     a := app.New()
-    win := a.NewWindow("Программа для просмотра погоды")
+	a.Settings().SetTheme(theme.DarkTheme())
+    win := a.NewWindow("Погода Ярославль")
     win.SetContent(widget.NewVBox(
         widget.NewButton("Quit", func() {
             a.Quit()
@@ -173,15 +174,7 @@ func isKey(k string) (ok bool, isArray bool) {
 
 func C2K(kelvin float64) string {
 	fmt.Printf("\tthe____________ %s is %v\n", kelvin-273.0, kelvin)
-	return fmt.Sprintf("%f °C", Round(kelvin-273.0))
-}
-
-func Round(x float64) float64 {
-	t := math.Trunc(x)
-	if math.Abs(x-t) >= 0.5 {
-		return t + math.Copysign(1, x)
-	}
-	return t
+	return fmt.Sprintf("%.2f °C", kelvin-273.0)
 }
 
 func isTempVal(k string) bool {
