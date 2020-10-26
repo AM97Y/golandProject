@@ -197,7 +197,7 @@ func main() {
 							groupBox3.Append(widget.NewVBox(
 								widget.NewLabelWithStyle(fmt.Sprintf("Небо:  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
-						if isFeels_like(kk) {
+						if isFeelsLike(kk) {
 							var temp = C2K(vv.(float64))
 							groupBox3.Append(widget.NewVBox(
 								widget.NewLabelWithStyle(fmt.Sprintf("Температура чуствуется как:  %v", temp), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
@@ -255,7 +255,7 @@ func isSpeed(k string) bool {
 	return strings.Contains(k, "speed")
 }
 
-func isFeels_like(k string) bool {
+func isFeelsLike(k string) bool {
 	return strings.Contains(k, "feels_like")
 }
 

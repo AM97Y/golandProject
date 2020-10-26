@@ -1,0 +1,26 @@
+coord:
+	the lon is 50.54
+	the lat is 58.58
+main:
+	the grnd_level is 997
+	the temp is -0.16 °C
+	the feels_like is 267.47
+	the temp_min is -0.16 °C
+	the temp_max is -0.16 °C
+	the pressure is 1020
+	the humidity is 92
+	the sea_level is 1020
+clouds:
+	the all is 99
+sys:
+	the country is RU
+	the sunrise at 2020-10-26 06:40:09 +0300 MSK
+	the sunset at 2020-10-26 16:03:10 +0300 MSK
+weather:
+	the description is overcast clouds
+	the icon is 04d
+	the id is 804
+	the main is Clouds
+wind:
+	the speed is 4.54
+	the deg is 345
