@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -67,7 +68,17 @@ func main() {
         widget.NewButton("Quit", func() {
             a.Quit()
         }),
+
     ))
+
+	f, err := os.Create("result.txt")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	//fmt.Println(l, "bytes written successfully")
+
 
     // Читаем данные.
 	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
@@ -105,10 +116,18 @@ func main() {
 	var groupBox2 = widget.NewVBox()
 	var groupBox3 = widget.NewVBox()
 
+	var time_2 = time.Now().String()
+	vBox.Append(widget.NewGroup(time_2))
 
 	for k, v := range data {
 		val, isArray := isKey(k)
 		if val {
+			_, err := f.WriteString(fmt.Sprintf("%s:\n", k))
+			if err != nil {
+				fmt.Println(err)
+				f.Close()
+				return
+			}
 			fmt.Printf("%s:\n", k)
 			//vBox.Append(widget.NewVBox(
 			//	widget.NewLabel(fmt.Sprintf("%s", k))))
@@ -125,10 +144,17 @@ func main() {
 							vBox.Append(icon)
 						} else {
 							groupBox.Append(widget.NewVBox(
-								widget.NewLabel(fmt.Sprintf("the %s is %v", kk, vv))))
+								widget.NewLabelWithStyle(fmt.Sprintf("the %s is %v", kk, vv),
+									fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})))
 						}
 
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
 					}
 				}
 
@@ -143,15 +169,46 @@ func main() {
 							widget.NewLabel(fmt.Sprintf("the %s is %s", kk, farenTemp))))
 
 						fmt.Printf("\tthe %s is %s\n", kk, farenTemp)
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %s\n", kk, farenTemp))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
 					} else if isSunVal(kk) {
 						sunTime := time.Unix(int64(vv.(float64)), 0)
 						groupBox2.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("the %s at %v", kk, sunTime))))
+							widget.NewLabelWithStyle(fmt.Sprintf("the %s at %v", kk, sunTime),
+								fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})))
 						fmt.Printf("\tthe %s at %v\n", kk, sunTime)
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
+
 					} else {
-						groupBox3.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("the %s is %v", kk, vv))))
+						if isSpeed(kk) {
+							groupBox3.Append(widget.NewVBox(
+								widget.NewLabelWithStyle(fmt.Sprintf("Скрость:  %v", vv), fyne.TextAlignCenter, fyne.TextStyle{ Monospace: true})))
+						}
+						if isClouds(kk) {
+							groupBox3.Append(widget.NewVBox(
+								widget.NewLabelWithStyle(fmt.Sprintf("Небо:  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
+						}
+						if isFeels_like(kk) {
+							var temp = C2K(vv.(float64))
+							groupBox3.Append(widget.NewVBox(
+								widget.NewLabelWithStyle(fmt.Sprintf("Температура чуствуется как:  %v", temp), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
+						}
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
 					}
 				}
 			}
@@ -164,6 +221,16 @@ func main() {
 	vBox.Append(widget.NewButton("Закрыть", func() {
 		a.Quit()
 	}))
+
+	//vBox.Append(widget.NewButton("Обновить", func() {
+	//	a.Quit()
+	//	main()
+	//}))
+	err = f.Close()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	win.SetContent(vBox)
 	win.ShowAndRun()}
 
@@ -173,7 +240,7 @@ func isKey(k string) (ok bool, isArray bool) {
 }
 
 func C2K(kelvin float64) string {
-	fmt.Printf("\tthe____________ %s is %v\n", kelvin-273.0, kelvin)
+	// fmt.Printf("\tthe____________ %s is %v\n", kelvin-273.0, kelvin)
 	return fmt.Sprintf("%.2f °C", kelvin-273.0)
 }
 
@@ -183,4 +250,15 @@ func isTempVal(k string) bool {
 
 func isSunVal(k string) bool {
 	return strings.Contains(k, "sun")
+}
+func isSpeed(k string) bool {
+	return strings.Contains(k, "speed")
+}
+
+func isFeels_like(k string) bool {
+	return strings.Contains(k, "feels_like")
+}
+
+func isClouds(k string) bool {
+	return strings.Contains(k, "all")
 }
