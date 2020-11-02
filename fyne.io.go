@@ -116,8 +116,8 @@ func main() {
 	var groupBox2 = widget.NewVBox()
 	var groupBox3 = widget.NewVBox()
 
-	var time_2 = time.Now().String()
-	vBox.Append(widget.NewGroup(time_2))
+	var time2 = time.Now().String()
+	vBox.Append(widget.NewGroup(time2))
 
 	for k, v := range data {
 		val, isArray := isKey(k)
@@ -143,10 +143,13 @@ func main() {
 							var icon = widget.NewIcon(resource)
 							vBox.Append(icon)
 						} else {
-							groupBox.Append(widget.NewVBox(
-								widget.NewLabelWithStyle(fmt.Sprintf("the %s is %v", kk, vv),
-									fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})))
+							if strings.Contains(kk, "description"){
+									groupBox.Append(widget.NewVBox(
+										widget.NewLabelWithStyle(fmt.Sprintf("%v", vv),
+											fyne.TextAlignTrailing, fyne.TextStyle{Bold: true, Monospace: true})))
+								}
 						}
+
 
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
 						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
@@ -164,10 +167,16 @@ func main() {
 				for kk, vv := range nmap {
 					if isTempVal(kk) {
 						farenTemp := C2K(vv.(float64))
-
-						groupBox1.Append(widget.NewVBox(
-							widget.NewLabel(fmt.Sprintf("the %s is %s", kk, farenTemp))))
-
+						if strings.Contains(kk, "temp_max") {
+							groupBox1.Append(widget.NewVBox(
+								widget.NewLabel(fmt.Sprintf("Максимальная температура %s", farenTemp))))
+						} else if strings.Contains(kk, "temp_min") {
+							groupBox1.Append(widget.NewVBox(
+								widget.NewLabel(fmt.Sprintf("Минимальная температура %s", farenTemp))))
+						} else {
+							groupBox1.Append(widget.NewVBox(
+								widget.NewLabel(fmt.Sprintf("Темература %s", farenTemp))))
+						}
 						fmt.Printf("\tthe %s is %s\n", kk, farenTemp)
 						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %s\n", kk, farenTemp))
 						if err != nil {
@@ -177,9 +186,15 @@ func main() {
 						}
 					} else if isSunVal(kk) {
 						sunTime := time.Unix(int64(vv.(float64)), 0)
-						groupBox2.Append(widget.NewVBox(
-							widget.NewLabelWithStyle(fmt.Sprintf("the %s at %v", kk, sunTime),
-								fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})))
+						if strings.Contains(kk, "sunrise") {
+							groupBox2.Append(widget.NewVBox(
+								widget.NewLabelWithStyle(fmt.Sprintf("Рассвет в  %v", sunTime),
+									fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})))
+						} else {
+							groupBox2.Append(widget.NewVBox(
+								widget.NewLabelWithStyle(fmt.Sprintf("Закат в %v", sunTime),
+									fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})))
+						}
 						fmt.Printf("\tthe %s at %v\n", kk, sunTime)
 						_, err := f.WriteString(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))
 						if err != nil {
@@ -191,11 +206,11 @@ func main() {
 					} else {
 						if isSpeed(kk) {
 							groupBox3.Append(widget.NewVBox(
-								widget.NewLabelWithStyle(fmt.Sprintf("Скрость:  %v", vv), fyne.TextAlignCenter, fyne.TextStyle{ Monospace: true})))
+								widget.NewLabelWithStyle(fmt.Sprintf("Скрость ветра (м/c):  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
 						if isClouds(kk) {
 							groupBox3.Append(widget.NewVBox(
-								widget.NewLabelWithStyle(fmt.Sprintf("Небо:  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
+								widget.NewLabelWithStyle(fmt.Sprintf("Затянутость неба:  %v ", vv.(float64)), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
 						if isFeelsLike(kk) {
 							var temp = C2K(vv.(float64))
@@ -216,7 +231,7 @@ func main() {
 		}
 	}
 	vBox.Append(widget.NewHBox(groupBox2))
-	vBox.Append(widget.NewHBox(groupBox, groupBox1))
+	vBox.Append(widget.NewHBox(groupBox1, groupBox))
 	vBox.Append(widget.NewHBox(groupBox3))
 	vBox.Append(widget.NewButton("Закрыть", func() {
 		a.Quit()
