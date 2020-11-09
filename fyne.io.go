@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	widget "fyne.io/fyne/widget"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -64,6 +64,9 @@ func main() {
     a := app.New()
 	a.Settings().SetTheme(theme.DarkTheme())
     win := a.NewWindow("Погода Ярославль")
+    //win.SetFullScreen(true)
+    win.CenterOnScreen()
+
     win.SetContent(widget.NewVBox(
         widget.NewButton("Quit", func() {
             a.Quit()
@@ -71,16 +74,19 @@ func main() {
 
     ))
 
+	showInfo(win)
+	win.ShowAndRun()
+
+}
+
+func showInfo(win fyne.Window ) {
 	f, err := os.Create("result.txt")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	//fmt.Println(l, "bytes written successfully")
-
-
-    // Читаем данные.
+	// Читаем данные.
 	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
 	u, err := url.Parse(urlString)
 	res, err := http.Get(u.String())
@@ -93,7 +99,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	var data map[string]interface{}
 
 	if dumpRaw {
@@ -129,11 +135,8 @@ func main() {
 				return
 			}
 			fmt.Printf("%s:\n", k)
-			//vBox.Append(widget.NewVBox(
-			//	widget.NewLabel(fmt.Sprintf("%s", k))))
 
 			if isArray {
-
 				for i := 0; i < len(v.([]interface{})); i++ {
 					nmap := v.([]interface{})[i].(map[string]interface{})
 					for kk, vv := range nmap {
@@ -142,14 +145,14 @@ func main() {
 							var resource, _ = fyne.LoadResourceFromURLString(fmt.Sprintf("http://openweathermap.org/img/wn/%s.png", vv)) // создаем статический ресурс, содержащий иконку погоды
 							var icon = widget.NewIcon(resource)
 							vBox.Append(icon)
+
 						} else {
 							if strings.Contains(kk, "description"){
-									groupBox.Append(widget.NewVBox(
-										widget.NewLabelWithStyle(fmt.Sprintf("%v", vv),
-											fyne.TextAlignTrailing, fyne.TextStyle{Bold: true, Monospace: true})))
-								}
+								groupBox.Append(widget.NewVBox(
+									widget.NewLabelWithStyle(fmt.Sprintf("%v", vv),
+										fyne.TextAlignTrailing, fyne.TextStyle{Bold: true, Monospace: true})))
+							}
 						}
-
 
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
 						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
@@ -233,21 +236,24 @@ func main() {
 	vBox.Append(widget.NewHBox(groupBox2))
 	vBox.Append(widget.NewHBox(groupBox1, groupBox))
 	vBox.Append(widget.NewHBox(groupBox3))
-	vBox.Append(widget.NewButton("Закрыть", func() {
-		a.Quit()
-	}))
 
-	//vBox.Append(widget.NewButton("Обновить", func() {
-	//	a.Quit()
-	//	main()
-	//}))
 	err = f.Close()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
+	vBox.Append(widget.NewButton("Обновить", func() {
+
+		win.Content().Refresh()
+		showInfo(win)
+		fmt.Println("Update")
+		win.Show()
+	}))
+
 	win.SetContent(vBox)
-	win.ShowAndRun()}
+
+}
 
 func isKey(k string) (ok bool, isArray bool) {
 	isArray, ok = weatherKeys[k]
@@ -255,7 +261,6 @@ func isKey(k string) (ok bool, isArray bool) {
 }
 
 func C2K(kelvin float64) string {
-	// fmt.Printf("\tthe____________ %s is %v\n", kelvin-273.0, kelvin)
 	return fmt.Sprintf("%.2f °C", kelvin-273.0)
 }
 
