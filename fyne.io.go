@@ -80,11 +80,6 @@ func main() {
 }
 
 func showInfo(win fyne.Window ) {
-	f, err := os.Create("result.txt")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
 	// Читаем данные.
 	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
@@ -128,14 +123,7 @@ func showInfo(win fyne.Window ) {
 	for k, v := range data {
 		val, isArray := isKey(k)
 		if val {
-			_, err := f.WriteString(fmt.Sprintf("%s:\n", k))
-			if err != nil {
-				fmt.Println(err)
-				f.Close()
-				return
-			}
 			fmt.Printf("%s:\n", k)
-
 			if isArray {
 				for i := 0; i < len(v.([]interface{})); i++ {
 					nmap := v.([]interface{})[i].(map[string]interface{})
@@ -145,7 +133,6 @@ func showInfo(win fyne.Window ) {
 							var resource, _ = fyne.LoadResourceFromURLString(fmt.Sprintf("http://openweathermap.org/img/wn/%s.png", vv)) // создаем статический ресурс, содержащий иконку погоды
 							var icon = widget.NewIcon(resource)
 							vBox.Append(icon)
-
 						} else {
 							if strings.Contains(kk, "description"){
 								groupBox.Append(widget.NewVBox(
@@ -153,19 +140,11 @@ func showInfo(win fyne.Window ) {
 										fyne.TextAlignTrailing, fyne.TextStyle{Bold: true, Monospace: true})))
 							}
 						}
-
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
-						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
-						if err != nil {
-							fmt.Println(err)
-							f.Close()
-							return
-						}
 					}
 				}
 
 			} else {
-
 				nmap := v.(map[string]interface{})
 				for kk, vv := range nmap {
 					if isTempVal(kk) {
@@ -181,12 +160,6 @@ func showInfo(win fyne.Window ) {
 								widget.NewLabel(fmt.Sprintf("Темература %s", farenTemp))))
 						}
 						fmt.Printf("\tthe %s is %s\n", kk, farenTemp)
-						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %s\n", kk, farenTemp))
-						if err != nil {
-							fmt.Println(err)
-							f.Close()
-							return
-						}
 					} else if isSunVal(kk) {
 						sunTime := time.Unix(int64(vv.(float64)), 0)
 						if strings.Contains(kk, "sunrise") {
@@ -198,14 +171,6 @@ func showInfo(win fyne.Window ) {
 								widget.NewLabelWithStyle(fmt.Sprintf("Закат в %v", sunTime),
 									fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})))
 						}
-						fmt.Printf("\tthe %s at %v\n", kk, sunTime)
-						_, err := f.WriteString(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))
-						if err != nil {
-							fmt.Println(err)
-							f.Close()
-							return
-						}
-
 					} else {
 						if isSpeed(kk) {
 							groupBox3.Append(widget.NewVBox(
@@ -221,6 +186,122 @@ func showInfo(win fyne.Window ) {
 								widget.NewLabelWithStyle(fmt.Sprintf("Температура чуствуется как:  %v", temp), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
+
+					}
+				}
+			}
+		} else {
+		}
+	}
+	vBox.Append(widget.NewHBox(groupBox2))
+	vBox.Append(widget.NewHBox(groupBox1, groupBox))
+	vBox.Append(widget.NewHBox(groupBox3))
+	vBox.Append(widget.NewButton("Обновить", func() {
+
+		win.Content().Refresh()
+		showInfo(win)
+		fmt.Println("Updated")
+		win.Show()
+	}))
+	vBox.Resize(fyne.Size{Width: 800, Height: 600})
+
+	input := widget.NewEntry()
+	input.SetText("/home/monsterpc/result.txt")
+	input.SetPlaceHolder("Путь для сохранения отчета")
+
+	content := widget.NewVBox(input, widget.NewButton("Сохранить полный отчет", func() {
+		log.Println("Content was:", input.Text)
+		save(input.Text)
+		fmt.Println("Saved")
+	}))
+
+	vBox.Append(widget.NewVBox(
+		content))
+	win.SetContent(vBox)
+
+}
+
+func save(fileName string) {
+	f, err := os.Create(fileName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Читаем данные.
+	urlString := fmt.Sprintf("http://api.openweathermap.org/data/2.5/weather?zip=%s&APPID=%s", zip, api)
+	u, err := url.Parse(urlString)
+	res, err := http.Get(u.String())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	jsonBlob, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data map[string]interface{}
+
+	if dumpRaw {
+		fmt.Printf("blob = %s\n\n", jsonBlob)
+	}
+
+	err = json.Unmarshal(jsonBlob, &data)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	if dumpRaw {
+		fmt.Printf("%+v", data)
+	}
+
+
+	for k, v := range data {
+		val, isArray := isKey(k)
+		if val {
+			_, err := f.WriteString(fmt.Sprintf("%s:\n", k))
+			if err != nil {
+				fmt.Println(err)
+				f.Close()
+				return
+			}
+
+			if isArray {
+				for i := 0; i < len(v.([]interface{})); i++ {
+					nmap := v.([]interface{})[i].(map[string]interface{})
+					for kk, vv := range nmap {
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
+					}
+				}
+
+			} else {
+				nmap := v.(map[string]interface{})
+				for kk, vv := range nmap {
+					if isTempVal(kk) {
+						farenTemp := C2K(vv.(float64))
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %s\n", kk, farenTemp))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
+					} else if isSunVal(kk) {
+						sunTime := time.Unix(int64(vv.(float64)), 0)
+						_, err := f.WriteString(fmt.Sprintf("\tthe %s at %v\n", kk, sunTime))
+						if err != nil {
+							fmt.Println(err)
+							f.Close()
+							return
+						}
+
+					} else {
 						_, err := f.WriteString(fmt.Sprintf("\tthe %s is %v\n", kk, vv))
 						if err != nil {
 							fmt.Println(err)
@@ -233,26 +314,6 @@ func showInfo(win fyne.Window ) {
 		} else {
 		}
 	}
-	vBox.Append(widget.NewHBox(groupBox2))
-	vBox.Append(widget.NewHBox(groupBox1, groupBox))
-	vBox.Append(widget.NewHBox(groupBox3))
-
-	err = f.Close()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	vBox.Append(widget.NewButton("Обновить", func() {
-
-		win.Content().Refresh()
-		showInfo(win)
-		fmt.Println("Update")
-		win.Show()
-	}))
-
-	win.SetContent(vBox)
-
 }
 
 func isKey(k string) (ok bool, isArray bool) {
