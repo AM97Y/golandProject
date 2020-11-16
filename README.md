@@ -9,4 +9,8 @@ go get github.com/briandowns/openweathermap
 
 go build
 
-go run golandProject 
+go run golandProject
+
+ЛИБО
+
+./gradlew build
