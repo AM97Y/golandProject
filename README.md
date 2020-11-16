@@ -1,5 +1,5 @@
 # golandProject
-
+Данной приложение выводит погоду в Ярославле и позволяет сохранять отчеты по казаному пути.
 go get fyne.io/fyne
 
 go get github.com/briandowns/openweathermap
