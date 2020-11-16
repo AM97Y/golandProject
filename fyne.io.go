@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/theme"
-	widget "fyne.io/fyne/widget"
+	"fyne.io/fyne/widget"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -66,14 +66,6 @@ func main() {
     win := a.NewWindow("Погода Ярославль")
     //win.SetFullScreen(true)
     win.CenterOnScreen()
-
-    win.SetContent(widget.NewVBox(
-        widget.NewButton("Quit", func() {
-            a.Quit()
-        }),
-
-    ))
-
 	showInfo(win)
 	win.ShowAndRun()
 
@@ -203,7 +195,7 @@ func showInfo(win fyne.Window ) {
 		fmt.Println("Updated")
 		win.Show()
 	}))
-	vBox.Resize(fyne.Size{Width: 800, Height: 600})
+	vBox.Resize(fyne.Size{Width: 900, Height: 600})
 
 	input := widget.NewEntry()
 	input.SetText("/home/monsterpc/result.txt")
