@@ -14,3 +14,4 @@ go run golandProject
 ЛИБО
 
 ./gradlew build
+Результат в папке .gogradle
