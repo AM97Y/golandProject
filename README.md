@@ -15,3 +15,10 @@ go run golandProject
 
 ./gradlew build
 Результат в папке .gogradle
+
+
+
+Так же по желанию можно добавить иконку.
+go get github.com/akavel/rsrc
+rsrc -ico YOUR_ICON_FILE_NAME.ico
+go build
