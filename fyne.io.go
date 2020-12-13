@@ -117,7 +117,7 @@ func showInfo(win fyne.Window ) {
 								widget.NewLabel(fmt.Sprintf("Минимальная температура %s", farenTemp))))
 						} else {
 							groupBox1.Append(widget.NewVBox(
-								widget.NewLabel(fmt.Sprintf("Темература %s", farenTemp))))
+								widget.NewLabel(fmt.Sprintf("Температура %s", farenTemp))))
 						}
 						fmt.Printf("\tthe %s is %s\n", kk, farenTemp)
 					} else if isSunVal(kk) {
@@ -134,7 +134,7 @@ func showInfo(win fyne.Window ) {
 					} else {
 						if isSpeed(kk) {
 							groupBox3.Append(widget.NewVBox(
-								widget.NewLabelWithStyle(fmt.Sprintf("Скрость ветра (м/c):  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
+								widget.NewLabelWithStyle(fmt.Sprintf("Скорость ветра (м/c):  %v", vv), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
 						if isClouds(kk) {
 							groupBox3.Append(widget.NewVBox(
@@ -143,7 +143,7 @@ func showInfo(win fyne.Window ) {
 						if isFeelsLike(kk) {
 							var temp = C2K(vv.(float64))
 							groupBox3.Append(widget.NewVBox(
-								widget.NewLabelWithStyle(fmt.Sprintf("Температура чуствуется как:  %v", temp), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
+								widget.NewLabelWithStyle(fmt.Sprintf("Температура ощущается как:  %v", temp), fyne.TextAlignLeading, fyne.TextStyle{ Monospace: true})))
 						}
 						fmt.Printf("\tthe %s is %v\n", kk, vv)
 

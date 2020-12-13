@@ -4,19 +4,17 @@ plugins {
 
 golang {
     goVersion = '1.8.1'
-    packagePath  = 'golandProject' // go import path of project to be built, NOT local file system path!
+    packagePath  = 'github.com/AverinaMasha/golandProject' // go import path of project to be built, NOT local file system path!
 }
 
 dependencies {
     golang {
-        build(['name':'fyne.io/fyne'])
+        build name:'github.com/fyne-io/fyne', url:'https://github.com/fyne-io/fyne.git'
     }
 }
-
 
 goBuild {
     // Cross-compile output
     targetPlatform = ['windows-amd64', 'linux-amd64', 'linux-386']
-    go 'build '
-
+    go 'build'
 }

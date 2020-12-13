@@ -1,0 +1,20 @@
+plugins {
+    id 'com.github.blindpirate.gogradle' version '0.11.4'
+}
+
+golang {
+    goVersion = '1.8.1'
+    packagePath  = 'github.com/AverinaMasha/golandProject' // go import path of project to be built, NOT local file system path!
+}
+
+dependencies {
+    golang {
+        build(['name':'fyne.io/fyne'])
+    }
+}
+
+goBuild {
+    // Cross-compile output
+    targetPlatform = ['windows-amd64', 'linux-amd64', 'linux-386']
+    go 'build '
+}
